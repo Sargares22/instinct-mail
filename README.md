@@ -7,6 +7,19 @@ Lets a BB agent ask an Instinct agent a question by email and get the answer bac
 > [!IMPORTANT]
 > Unofficial community project. Not affiliated with, endorsed by, or supported by Instinct or Google. Instinct support did not answer whether a third-party email client is allowed, so compatibility with their Terms is unconfirmed. Use only with accounts you control, at your own risk.
 
+## Why
+
+Instinct is a personal AI assistant you can reach by email. It can browse, research and come back with an answer later, but it has no API and no access to your machine. BB agents live on your machine and are good at code, but every extra research task eats their context.
+
+Instinct Mail joins the two. A BB agent writes a question, sends it, keeps working, and gets woken up when the answer lands. The reply arrives as text the agent can read, not as instructions it must follow.
+
+Typical uses:
+
+- A second opinion on a plan or an architecture choice from someone outside the codebase
+- Research that takes a while: compare libraries, check licenses, dig through documentation
+- Fact-checking claims an agent is about to rely on
+- Questions you would normally paste into a chat window yourself, now sent without leaving the thread
+
 ## How it works
 
 The `ask` command sends a plain-text email from your Gmail to the Instinct address. A background service polls Gmail over IMAP, takes only messages whose sender exactly matches that address, links each reply to the request by mail headers, and wakes the BB thread that asked. The agent then reads the reply with `read`. Replies are untrusted text: a pattern scanner flags suspicious content, but it is not a sandbox and does not make a message safe.
