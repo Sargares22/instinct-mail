@@ -1,0 +1,12 @@
+.env
+data/
+*.env
+*.sqlite
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
+*.lock
+__pycache__/
+*.pyc
+.tmp*
