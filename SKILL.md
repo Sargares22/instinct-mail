@@ -27,7 +27,7 @@ The Gmail app password and the exact Instinct sender address must be configured 
 
 ## Check and read replies
 
-The receiver runs as `instinct-mail.service`. Check it once when needed:
+The receiver runs as `instinct-mail.service` on Linux (or `com.instinct-mail.receiver` under launchd on macOS). Check it once when needed:
 
 ```bash
 instinct-mail status

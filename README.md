@@ -1,6 +1,6 @@
 # Instinct Mail
 
-Lets a BB agent ask an Instinct agent a question by email and get the answer back into its thread. A small Gmail bridge for Linux with `systemd --user`.
+Lets a BB agent ask an Instinct agent a question by email and get the answer back into its thread. A small Gmail bridge for Linux (`systemd --user`) and macOS (`launchd`).
 
 [Русская версия](README.ru.md)
 
@@ -26,13 +26,16 @@ The `ask` command sends a plain-text email from your Gmail to the Instinct addre
 
 ## Requirements
 
-- Linux or WSL with `systemd` for the user session
+- Linux or WSL with `systemd` for the user session, or macOS
 - BB on `PATH`
 - Python 3.10+
 - Gmail with 2-Step Verification and an app password
 - The email address of your Instinct agent
 
 No `sudo`, no system packages, no Python dependencies.
+
+> [!NOTE]
+> The macOS installer has not been tried on a real Mac yet. If you run it there, an issue with the outcome would help.
 
 ## Install
 
@@ -49,16 +52,18 @@ Then edit `~/.config/instinct-mail/.env`:
 Restart the service after editing:
 
 ```bash
-systemctl --user restart instinct-mail.service
+systemctl --user restart instinct-mail.service          # Linux
+launchctl kickstart -k gui/$(id -u)/com.instinct-mail.receiver   # macOS
 ```
 
-The installer puts the code in `~/.local/share/instinct-mail`, the `instinct-mail` command in `~/.local/bin`, the BB skill in `~/.bb/skills/instinct-mail`, and state in `~/.local/state/instinct-mail`. Credentials stay on your machine. If you change the Node installation used by `bb`, run `./install.sh` again.
+The installer puts the code in `~/.local/share/instinct-mail`, the `instinct-mail` command in `~/.local/bin`, the BB skill in `~/.bb/skills/instinct-mail`, and state in `~/.local/state/instinct-mail`. On macOS the service is a LaunchAgent at `~/Library/LaunchAgents/com.instinct-mail.receiver.plist` and its logs go to the state folder. Credentials stay on your machine. If you change the Node installation used by `bb`, run `./install.sh` again.
 
 ## Daily use
 
 ```bash
 instinct-mail status
-systemctl --user restart instinct-mail.service
+systemctl --user restart instinct-mail.service                   # Linux
+launchctl kickstart -k gui/$(id -u)/com.instinct-mail.receiver   # macOS
 ./install.sh --uninstall   # keeps credentials and state
 ```
 
