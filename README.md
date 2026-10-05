@@ -1,6 +1,6 @@
 # Instinct Mail
 
-Lets a BB agent ask an Instinct agent a question by email and get the answer back into its thread. A small Gmail bridge for Linux (`systemd --user`) and macOS (`launchd`).
+Lets a BB agent ask an Instinct agent a question by email and receive the answer directly in its thread. A Gmail bridge for Linux (`systemd --user`) and macOS (`launchd`).
 
 [Русская версия](README.ru.md)
 
@@ -9,66 +9,51 @@ Lets a BB agent ask an Instinct agent a question by email and get the answer bac
 
 ## Why
 
-Instinct is a personal AI assistant you can reach by email. It can browse, research and come back with an answer later, but it has no API and no access to your machine. BB agents live on your machine and are good at code, but every extra research task eats their context.
+Instinct is a personal AI assistant you can reach by email. It can browse, research and come back with an answer later, but it has no API and no access to your machine. BB agents live on your machine and are good at code, but background research tasks quickly eat their context.
 
-Instinct Mail joins the two. A BB agent writes a question, sends it, keeps working, and gets woken up when the answer lands. The reply arrives as text the agent can read, not as instructions it must follow.
+Instinct Mail joins the two. A BB agent writes a question, sends it, keeps working, and wakes up when the reply arrives. The reply arrives as text to read, not as instructions the agent must follow.
 
 Typical uses:
 
 - A second opinion on a plan or an architecture choice from someone outside the codebase
 - Research that takes a while: compare libraries, check licenses, dig through documentation
-- Fact-checking claims an agent is about to rely on
+- Fact-checking claims before making engineering decisions
 - Questions you would normally paste into a chat window yourself, now sent without leaving the thread
 
-## How it works
+## Install via your agent
 
-The `ask` command sends a plain-text email from your Gmail to the Instinct address. A background service polls Gmail over IMAP, takes only messages whose sender exactly matches that address, links each reply to the request by mail headers, and wakes the BB thread that asked. The agent then reads the reply with `read`. Replies are untrusted text: a pattern scanner flags suspicious content, but it is not a sandbox and does not make a message safe.
+Tell your agent:
+> Install Instinct Mail from https://github.com/Sargares22/instinct-mail and set up Gmail.
 
-## Requirements
-
-- Linux or WSL with `systemd` for the user session, or macOS
-- BB on `PATH`
-- Python 3.10+
-- Gmail with 2-Step Verification and an app password
-- The email address of your Instinct agent
-
-No `sudo`, no system packages, no Python dependencies.
-
-> [!NOTE]
-> The macOS installer has not been tried on a real Mac yet. If you run it there, an issue with the outcome would help.
-
-## Install
+One-line installation command:
 
 ```bash
-./install.sh
+curl -fsSL https://raw.githubusercontent.com/Sargares22/instinct-mail/main/install.sh | bash
 ```
 
-Then edit `~/.config/instinct-mail/.env`:
+### What your agent does automatically
 
-- `GMAIL_ADDRESS`: your Gmail account
-- `GMAIL_APP_PASSWORD`: an app password, not your account password
-- `INSTINCT_ADDRESS`: the exact address of your Instinct agent
+- Downloads the repository, puts files in `~/.local/share/instinct-mail`, and adds `instinct-mail` to `~/.local/bin`
+- Registers the `instinct-mail` BB skill
+- Configures and starts the background service (`systemd --user` on Linux, LaunchAgent on macOS)
+- Verifies service status with `instinct-mail status`
 
-Restart the service after editing:
+### What your agent will ask you
 
-```bash
-systemctl --user restart instinct-mail.service          # Linux
-launchctl kickstart -k gui/$(id -u)/com.instinct-mail.receiver   # macOS
-```
+The bridge requires three settings in `~/.config/instinct-mail/.env`:
+- `GMAIL_ADDRESS`: your Gmail address
+- `GMAIL_APP_PASSWORD`: a 16-character Google app password (not your main account password)
+- `INSTINCT_ADDRESS`: the exact email address of your Instinct agent
 
-The installer puts the code in `~/.local/share/instinct-mail`, the `instinct-mail` command in `~/.local/bin`, the BB skill in `~/.bb/skills/instinct-mail`, and state in `~/.local/state/instinct-mail`. On macOS the service is a LaunchAgent at `~/Library/LaunchAgents/com.instinct-mail.receiver.plist` and its logs go to the state folder. Credentials stay on your machine. If you change the Node installation used by `bb`, run `./install.sh` again.
+### How to use it
 
-## Daily use
+Once configured, the agent uses the installed skill:
+- `instinct-mail ask`: sends a question to Instinct and returns a job ID
+- `instinct-mail read`: reads the received answer (scanned by a built-in injection filter)
+- `instinct-mail status`: checks background receiver status and unmatched incoming mail
 
-```bash
-instinct-mail status
-systemctl --user restart instinct-mail.service                   # Linux
-launchctl kickstart -k gui/$(id -u)/com.instinct-mail.receiver   # macOS
-./install.sh --uninstall   # keeps credentials and state
-```
-
-The installed skill explains the `ask`, `reply` and `read` commands for the agent.
+Uninstall anytime with `./install.sh --uninstall` (credentials and state are preserved).
 
 ## License
 
-Original code: WTFPL, see [LICENSE](LICENSE). The security gate is a port from IVA Agent under MIT, and the Unicode tables are under the Unicode License v3. Details in [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES) and [docs/security-gate.md](docs/security-gate.md).
+WTFPL, see [LICENSE](LICENSE).

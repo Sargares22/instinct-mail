@@ -399,7 +399,7 @@ def gate_outgoing_mime(raw_mime: bytes) -> tuple[bytes, list[dict]]:
     """Scan decoded authored text, including stored retries, before SMTP encoding.
 
     Only the wire copy is redacted; the local archive and request hashes stay intact.
-    Findings deliberately omit IVA previews, which can contain secret fragments.
+    Findings deliberately omit previews, which can contain secret fragments.
     """
     mail = email.parser.BytesParser(policy=email.policy.SMTP).parsebytes(raw_mime)
     findings = []

@@ -1,7 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SOURCE_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+SCRIPT_DIR=""
+if [[ -n "${BASH_SOURCE[0]:-}" && "${BASH_SOURCE[0]}" != "-" && "${BASH_SOURCE[0]}" != "/dev/stdin" ]]; then
+    SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" 2>/dev/null && pwd -P || true)
+fi
+
+if [[ -z "$SCRIPT_DIR" || ! -f "$SCRIPT_DIR/scripts/instinct_mail.py" ]]; then
+    DEFAULT_ARCHIVE="https://github.com/Sargares22/instinct-mail/archive/refs/heads/main.tar.gz"
+    ARCHIVE_URL="${INSTINCT_MAIL_ARCHIVE_URL:-$DEFAULT_ARCHIVE}"
+    TMP_DL=$(mktemp -d "${TMPDIR:-/tmp}/instinct-mail-dl.XXXXXX")
+    trap 'rm -rf -- "$TMP_DL"' EXIT
+
+    ARCHIVE_FILE="$TMP_DL/archive.tar.gz"
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSL "$ARCHIVE_URL" -o "$ARCHIVE_FILE"
+    elif command -v wget >/dev/null 2>&1; then
+        wget -qO "$ARCHIVE_FILE" "$ARCHIVE_URL"
+    else
+        printf 'Error: curl or wget is required to download Instinct Mail.\n' >&2
+        exit 1
+    fi
+
+    mkdir -p -- "$TMP_DL/src"
+    tar -xzf "$ARCHIVE_FILE" -C "$TMP_DL/src" --strip-components=1
+    bash "$TMP_DL/src/install.sh" "$@"
+    exit $?
+fi
+
+SOURCE_DIR="$SCRIPT_DIR"
 SKIP_SYSTEMD=0
 UNINSTALL=0
 
@@ -223,14 +250,11 @@ install_common_files() {
     chmod 700 "$CONFIG_DIR" "$STATE_DIR"
     install -m 644 "$SOURCE_DIR/scripts/instinct_mail.py" "$STAGE_DIR/scripts/instinct_mail.py"
     install -m 644 "$SOURCE_DIR/scripts/security_gate.py" "$STAGE_DIR/scripts/security_gate.py"
-    install -m 644 "$SOURCE_DIR/scripts/security_gate_tables.json" "$STAGE_DIR/scripts/security_gate_tables.json"
     install -m 644 "$SOURCE_DIR/SKILL.md" "$STAGE_DIR/SKILL.md"
     install -m 644 "$SOURCE_DIR/docs/security-gate.md" "$STAGE_DIR/docs/security-gate.md"
     install -m 644 "$SOURCE_DIR/systemd/instinct-mail.service.in" "$STAGE_DIR/systemd/instinct-mail.service.in"
     install -m 644 "$SOURCE_DIR/launchd/com.instinct-mail.receiver.plist.in" "$STAGE_DIR/launchd/com.instinct-mail.receiver.plist.in"
     install -m 644 "$SOURCE_DIR/LICENSE" "$STAGE_DIR/LICENSE"
-    install -m 644 "$SOURCE_DIR/LICENSE.iva-agent" "$STAGE_DIR/LICENSE.iva-agent"
-    install -m 644 "$SOURCE_DIR/THIRD_PARTY_NOTICES" "$STAGE_DIR/THIRD_PARTY_NOTICES"
     install -m 644 "$SOURCE_DIR/.env.example" "$STAGE_DIR/.env.example"
     install -m 644 "$SOURCE_DIR/README.md" "$STAGE_DIR/README.md"
     if [[ -f "$SOURCE_DIR/README.ru.md" ]]; then
