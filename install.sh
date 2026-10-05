@@ -423,3 +423,20 @@ else
         printf 'Service: active (launchd)\n'
     fi
 fi
+
+if [[ -f "$ENV_FILE" ]]; then
+    missing=()
+    for var in GMAIL_ADDRESS GMAIL_APP_PASSWORD INSTINCT_ADDRESS; do
+        val=$(grep -E "^${var}=" "$ENV_FILE" 2>/dev/null | tail -n1 | cut -d= -f2- | tr -d "'\"[:space:]")
+        if [[ -z "$val" ]]; then
+            missing+=("$var")
+        fi
+    done
+    if (( ${#missing[@]} > 0 )); then
+        printf '\nRemaining configuration in %s to fill:\n' "$ENV_FILE"
+        for item in "${missing[@]}"; do
+            printf '  - %s\n' "$item"
+        done
+        printf 'After filling .env, verify with: instinct-mail status\n'
+    fi
+fi

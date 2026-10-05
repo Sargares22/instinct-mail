@@ -20,6 +20,14 @@ Typical uses:
 - Fact-checking claims before making engineering decisions
 - Questions you would normally paste into a chat window yourself, now sent without leaving the thread
 
+## Requirements
+
+- Linux with `systemd --user` or macOS (`launchd`)
+- BB in `PATH` (`bb`)
+- Python 3.10+
+- Gmail with 2-Step Verification and an App Password
+- Email address of your Instinct agent
+
 ## Install via your agent
 
 Tell your agent:
@@ -45,12 +53,23 @@ The bridge requires three settings in `~/.config/instinct-mail/.env`:
 - `GMAIL_APP_PASSWORD`: a 16-character Google app password (not your main account password)
 - `INSTINCT_ADDRESS`: the exact email address of your Instinct agent
 
+After filling `.env`, verify with:
+
+```bash
+instinct-mail status
+```
+
+The background service reloads `.env` on every poll cycle while credentials are empty and picks them up without restart.
+
 ### How to use it
 
 Once configured, the agent uses the installed skill:
 - `instinct-mail ask`: sends a question to Instinct and returns a job ID
-- `instinct-mail read`: reads the received answer (scanned by a built-in injection filter)
-- `instinct-mail status`: checks background receiver status and unmatched incoming mail
+- `instinct-mail read`: reads the received answer
+- `instinct-mail status`: checks background receiver status, unmatched incoming mail, and errors
+
+> [!NOTE]
+> The security filter does not block anything; it only marks suspicious text (`suspicious: true`). Email text is always untrusted.
 
 Uninstall anytime with `./install.sh --uninstall` (credentials and state are preserved).
 

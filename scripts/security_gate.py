@@ -46,17 +46,18 @@ _OUTBOUND_SECRET_PATTERNS = [
     ("google_key", re.compile(r"\bAIza[0-9A-Za-z-_]{35}\b")),
     ("github_pat", re.compile(r"\b(?:ghp|gho|ghu|ghs|ghr|github_pat)_[A-Za-z0-9_]{36,}\b")),
     ("slack_token", re.compile(r"\bxox[baprs]-[0-9A-Za-z-]{10,}\b")),
-    ("generic_secret", re.compile(r"(?i)\b(?:bearer\s+[A-Za-z0-9._~+/-]{20,}|(?:api[_-]?key|secret[_-]?key|app[_-]?password)\s*[:=]\s*['\"]?[A-Za-z0-9_\-.~+/@]{8,}['\"]?)")),
+    # Generic secret pattern catching GMAIL_APP_PASSWORD, API_KEY, etc.
+    ("generic_secret", re.compile(r"(?i)(?:\bbearer\s+[A-Za-z0-9._~+/-]{20,}|\b[A-Za-z0-9_]*(?:api[_-]?key|secret[_-]?key|app[_-]?password)\s*[:=]\s*['\"]?[A-Za-z0-9_\-.~+/@]{8,}['\"]?)")),
     ("markdown_image_exfil", re.compile(r"!\[.*?\]\(https?://[^\s)]+?[?&](?:token|key|secret|data)=[^\s)]+\)")),
     ("pipe_shell", re.compile(r"(?i)(?:curl|wget)\s+[^|\n]+\|\s*(?:bash|sh)")),
 ]
 
 
 def has_inbound_attack_signal(result: dict) -> bool:
-    """Return True if the scan verdict contains any inbound attack flags or is blocked."""
+    """Return True if the scan verdict contains any inbound attack flags or is blocked/suspicious."""
     if not isinstance(result, dict):
         return False
-    if result.get("blocked", False):
+    if result.get("blocked", False) or result.get("suspicious", False):
         return True
     return any(flag.split("=", 1)[0] in ("role-markers", "overrides", "invisible-flood") for flag in result.get("flags", []))
 
@@ -79,6 +80,7 @@ def sanitize_inbound(input_text: str, max_chars: int = MAX_SCAN_CHARS, options: 
             "text": cleaned[:max_chars],
             "truncatedChars": max(0, len(cleaned) - max_chars),
             "blocked": True,
+            "suspicious": True,
             "reason": f"Excessive invisible characters: {invisibles_found}",
             "flags": flags + ["invisible-flood"],
         }
@@ -104,6 +106,7 @@ def sanitize_inbound(input_text: str, max_chars: int = MAX_SCAN_CHARS, options: 
         "text": text_capped,
         "truncatedChars": truncated_chars,
         "blocked": is_blocked,
+        "suspicious": is_blocked,
         "reason": reason,
         "flags": flags,
     }
@@ -112,10 +115,36 @@ def sanitize_inbound(input_text: str, max_chars: int = MAX_SCAN_CHARS, options: 
     return verdict
 
 
-def scan_outbound(input_text: str, redact: bool = True) -> dict:
+def scan_outbound(input_text: str, redact: bool = True, app_password: str | None = None) -> dict:
     """Scan outgoing text for leaked credentials or injection artifacts."""
     text = input_text or ""
     findings: list[dict] = []
+
+    if app_password is None:
+        import os
+        app_password = os.environ.get("GMAIL_APP_PASSWORD")
+
+    # Explicit redaction of configured Gmail App Password in both forms (with and without spaces)
+    if app_password and app_password.strip():
+        raw_pw = app_password.strip()
+        pw_no_spaces = raw_pw.replace(" ", "")
+        targets = []
+        if len(pw_no_spaces) >= 8:
+            targets.append(pw_no_spaces)
+            pw_spaced = " ".join(pw_no_spaces[i:i+4] for i in range(0, len(pw_no_spaces), 4))
+            if pw_spaced != pw_no_spaces:
+                targets.append(pw_spaced)
+        elif len(raw_pw) >= 6:
+            targets.append(raw_pw)
+
+        # Longer target first so spaced variant is replaced before non-spaced
+        targets.sort(key=len, reverse=True)
+        for target in targets:
+            if target and target in text:
+                preview = target[:12] + "…" if len(target) > 12 else target
+                findings.append({"type": "api_key", "name": "gmail_app_password", "preview": preview})
+                if redact:
+                    text = text.replace(target, "[REDACTED]")
 
     for name, pattern in _OUTBOUND_SECRET_PATTERNS:
         for match in pattern.finditer(text):
