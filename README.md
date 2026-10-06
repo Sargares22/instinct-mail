@@ -1,6 +1,6 @@
 # Instinct Mail
 
-Lets a coding agent ask an Instinct agent a question by email and get woken when the answer arrives. One Python file, a Gmail account, any agent harness on Linux, macOS or Windows.
+Lets a coding agent ask an Instinct agent a question by email and get woken when the answer arrives. One Python file for any agent harness on Linux, macOS and Windows.
 
 [Русская версия](README.ru.md)
 
@@ -9,23 +9,22 @@ Lets a coding agent ask an Instinct agent a question by email and get woken when
 
 ## Why
 
-Instinct is a personal AI assistant you can reach by email. It can browse, research and come back with an answer later, but it has no API and no access to your machine. Coding agents live on your machine and are good at code, but background research tasks quickly eat their context.
+Instinct is a personal AI assistant you can reach by email. It can browse the web, conduct research, and return with an answer later, but it lacks an API and has no access to your machine. Coding agents live on your machine and excel at code, but background research tasks quickly consume their context window.
 
-Instinct Mail joins the two. The agent writes a question, sends it, keeps working, and picks the thread up again when the reply arrives. The reply arrives as text to read, not as instructions the agent must follow.
+Instinct Mail bridges this gap. The agent writes a question, sends it, continues working, and picks the thread back up when the reply arrives. The reply is delivered as plain text to read, not as instructions the agent must blindly follow.
 
-Typical uses:
-
-- A second opinion on a plan or an architecture choice from someone outside the codebase
-- Research that takes a while: compare libraries, check licenses, dig through documentation
+Typical use cases:
+- Getting a second opinion on a plan or an architectural choice from someone outside the codebase
+- Offloading time-consuming research: comparing libraries, checking licenses, or digging through documentation
 - Fact-checking claims before making engineering decisions
-- Questions you would normally paste into a chat window yourself, now sent without leaving the thread
+- Asking questions you would normally paste into a chat window yourself, now handled without leaving the thread
 
 ## Requirements
 
 - Python 3.10+ (standard library only)
-- Gmail with 2-Step Verification and an App Password
-- Email address of your Instinct agent
-- An agent that can run shell commands
+- A Gmail account with 2-Step Verification and an App Password
+- The email address of your Instinct agent
+- An agent capable of running shell commands
 
 ## Install
 
@@ -35,22 +34,23 @@ Tell your agent:
 
 ### Steps for the agent
 
-1. Download the single file to the same place on every OS:
+1. Download the single file to the same location on any OS:
 
    ```bash
    mkdir -p ~/.local/share/instinct-mail
    curl -fsSL https://raw.githubusercontent.com/Sargares22/instinct-mail/main/instinct_mail.py -o ~/.local/share/instinct-mail/instinct_mail.py
    ```
 
-2. Run `python3 ~/.local/share/instinct-mail/instinct_mail.py doctor` (`python` or `py -3` on Windows). It prints the exact command line for this machine under `command`; use that from now on.
-3. Create `~/.config/instinct-mail/.env` from [.env.example](.env.example) and restrict it to the owner (`chmod 600`; on Windows `doctor` prints the `icacls` command). Ask the human to fill in the three values themselves. Do not ask for the password in chat and do not print the file.
+2. Run `python3 ~/.local/share/instinct-mail/instinct_mail.py doctor` (use `python` or `py -3` on Windows). It prints the exact command line for this machine under `command`; use that from now on.
+3. Create `~/.config/instinct-mail/.env` from [.env.example](.env.example) and restrict its permissions to the owner (`chmod 600`; on Windows, `doctor` prints the required `icacls` command). Ask the human to fill in the three values themselves. Do not ask for the password in the chat and do not print the file contents.
 4. Run `doctor` again until `ready` is `true`.
-5. Save the skill where your harness keeps skills: `... instinct_mail.py skill > <skills dir>/instinct-mail/SKILL.md`. If your harness has no skills, add one line to its instructions file (`AGENTS.md`, `CLAUDE.md`): "to talk to Instinct, run `... instinct_mail.py skill` and follow the text".
-6. Pick how your thread gets woken, following the table in the skill text.
+5. Save the skill where your harness keeps its skills: `... instinct_mail.py skill > <skills dir>/instinct-mail/SKILL.md`. If your harness does not support skills, add a single line to its instructions file (`AGENTS.md`, `CLAUDE.md`): "to talk to Instinct, run `... instinct_mail.py skill` and follow the text".
+6. Determine how your thread gets woken up by following the table in the skill text.
 
-The only thing you need to work out about your own harness is where its skills live. One copy of the file serves every agent on the machine; they share the configuration and the database.
+The only thing you need to figure out about your specific harness is where its skills are stored. One copy of the file serves every agent on the machine; they all share the same configuration and database.
 
-Update: repeat steps 1 and 5. Uninstall: delete the file and the skill; configuration and state stay.
+To update: repeat steps 1 and 5.
+To uninstall: delete the file and the skill; your configuration and state will remain intact.
 
 ### What the human provides
 
@@ -69,21 +69,21 @@ Three settings in `~/.config/instinct-mail/.env`:
 | Codex CLI | Not confirmed. The agent checks `status` at the start of a turn. |
 | Others | Run `doctor --probe 60` in the background and end the turn. If the thread resumes by itself, use the background `wait`; otherwise check `status`. |
 
-There is no mandatory background service. `serve` is only for harnesses that have a command to post into a thread from outside; example unit files are in [contrib/](contrib/).
+There is no mandatory background service. The `serve` command is only for harnesses that have a mechanism to post into a thread from the outside; example unit files are available in [contrib/](contrib/).
 
 ## Commands
 
-- `ask`, `reply`: send a question or a follow-up, return a job ID
+- `ask`, `reply`: send a question or a follow-up, returns a job ID
 - `wait`: block until a job has an unread reply
 - `read`: read a reply; it is marked as read after its last page
-- `status`: jobs, unread and unmatched mail, last mailbox check
+- `status`: view jobs, unread and unmatched mail, and the last mailbox check
 - `sync`: check the mailbox once
 - `serve`: optional receiver service that calls notifiers
 - `doctor`: describe the installation without printing secrets
 - `skill`: print the `SKILL.md` for this installation
 - `migrate`: upgrade the database of an older installation
 
-However many agents are waiting, Gmail is checked by one process at a time and at most once per `POLL_SECONDS` (60).
+Regardless of how many agents are waiting, Gmail is checked by one process at a time and at most once per `POLL_SECONDS` (60).
 
 > [!NOTE]
 > The security filter does not block anything; it only marks suspicious text (`suspicious: true`). Email text is always untrusted. See [docs/security-gate.md](docs/security-gate.md).
