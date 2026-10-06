@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Example LaunchAgent for the optional receiver. Replace /Users/YOU, copy to
+     ~/Library/LaunchAgents/, then: launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.instinct-mail.receiver.plist -->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.instinct-mail.receiver</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/Users/YOU/.local/share/instinct-mail/instinct_mail.py</string>
+        <string>serve</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <!-- The notifier program (for example bb) must be found on this PATH. -->
+        <key>PATH</key>
+        <string>/Users/YOU/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/Users/YOU/.local/state/instinct-mail/receiver.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/YOU/.local/state/instinct-mail/receiver.err.log</string>
+</dict>
+</plist>

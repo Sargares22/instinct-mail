@@ -7,7 +7,7 @@ tags: [security]
 
 # Security gate
 
-`scripts/security_gate.py` is a Python standard-library filter that protects against prompt injections, secret leakage, and destructive commands.
+The security gate inside `instinct_mail.py` is a Python standard-library filter that protects against prompt injections, secret leakage, and destructive commands.
 
 ## Inbound responses
 

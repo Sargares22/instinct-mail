@@ -1,0 +1,22 @@
+# Example systemd user unit for the optional receiver.
+# Copy to ~/.config/systemd/user/instinct-mail.service, then:
+#   systemctl --user daemon-reload && systemctl --user enable --now instinct-mail.service
+
+[Unit]
+Description=Instinct Mail receiver
+StartLimitIntervalSec=0
+# For BB, tie the receiver to the BB service:
+# BindsTo=bb.service
+# After=bb.service
+
+[Service]
+Type=simple
+# The notifier program (for example bb) must be found on this PATH.
+Environment="PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/usr/bin/python3 %h/.local/share/instinct-mail/instinct_mail.py serve
+Restart=always
+RestartSec=30s
+TimeoutStopSec=35s
+
+[Install]
+WantedBy=default.target
