@@ -1808,6 +1808,8 @@ Save the request text to a UTF-8 file in your session's scratch or thread storag
 
     instinct-mail ask --file PATH/REQUEST.md --request-id req_TOPIC_1
 
+If the wake-up table below names a notifier for your harness, add its flags to every `ask`; on BB that is `--notify bb --thread "$BB_THREAD_ID"`.
+
 For a follow-up in an existing job, first read every unread reply of that job, then:
 
     instinct-mail reply --job JOB_ID --file PATH/REPLY.md --request-id req_TOPIC_2

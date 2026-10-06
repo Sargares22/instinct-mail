@@ -29,7 +29,7 @@ The old code does not check the schema version, so stop it before the new code t
 1. Stop the receiver: `systemctl --user stop instinct-mail.service` (macOS: `launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.instinct-mail.receiver.plist`).
 2. Check where the configuration and database are. If they are in `~/.config/instinct-mail` and `~/.local/state/instinct-mail`, nothing to move. If a `.env` or `data/` sits next to the old script, move them there.
 3. Copy `~/.local/state/instinct-mail/instinct.sqlite3` somewhere safe.
-4. Download the new `instinct_mail.py` to `~/.local/share/instinct-mail/` and regenerate the skill with `skill` (README, steps 1 and 5). Remove `~/.local/bin/instinct-mail` and the old `scripts/` directory.
+4. Download the new `instinct_mail.py` to `~/.local/share/instinct-mail/` and regenerate the skill with `skill` (README, steps 1 and 5). Remove the old `scripts/` directory. Remove `~/.local/bin/instinct-mail` too, unless something else calls it (the BB Instinct Inbox plugin does by default); in that case point it at the new file.
 5. Add to `~/.config/instinct-mail/.env`: `NOTIFY_BB=["bb", "thread", "tell", "{thread}", "{text}"]`
 6. Run `instinct_mail.py migrate --notifier bb`. It upgrades the schema and assigns the `bb` notifier to open jobs that have a thread; without it the receiver will not wake threads for questions asked before the upgrade.
 7. Replace the service unit with the example from `contrib/` and start it.
